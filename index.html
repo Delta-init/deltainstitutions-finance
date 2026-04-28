@@ -813,6 +813,10 @@
         background: rgba(255, 181, 71, 0.15);
         color: var(--amber);
       }
+      .role-custom {
+        background: rgba(99, 179, 99, 0.15);
+        color: var(--green);
+      }
       .perm-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1662,6 +1666,7 @@
           if (d) {
             const db = JSON.parse(d);
             if (!db.quotations) db.quotations = [];
+            if (!db.roles) db.roles = [];
             return db;
           }
         } catch (e) {}
@@ -1711,6 +1716,7 @@
               email: "admin@carltonedu.com",
             },
           ],
+          roles: [],
           accounts: [
             {
               id: "acc1",
@@ -2101,7 +2107,20 @@
       }
       function perm(key) {
         if (!SESSION) return false;
+        // Check custom roles stored in DB first
+        const customRole = (DB.roles||[]).find(r=>r.id===SESSION.role);
+        if (customRole) return !!customRole.permissions[key];
+        // Fall back to built-in hardcoded roles
         return ROLE_PERMS[SESSION.role]?.[key] || false;
+      }
+      function getRolePerms(roleId) {
+        const customRole = (DB.roles||[]).find(r=>r.id===roleId);
+        if (customRole) return customRole.permissions;
+        return ROLE_PERMS[roleId] || {};
+      }
+      function getRoleLabel(roleId) {
+        const customRole = (DB.roles||[]).find(r=>r.id===roleId);
+        return customRole ? customRole.name : roleId;
       }
       function applyRoleUI() {
         // Update user badge
@@ -2109,34 +2128,25 @@
         const nm = document.getElementById("ub-name");
         const rl = document.getElementById("ub-role");
         ic.textContent = initials(SESSION.name);
-        ic.className = "ub-ic " + ROLE_COLORS[SESSION.role];
+        ic.className = "ub-ic " + (ROLE_COLORS[SESSION.role] || "ic-blue");
         nm.textContent = SESSION.name;
-        rl.textContent = SESSION.role;
+        rl.textContent = getRoleLabel(SESSION.role);
 
         // Render the dynamic currency toggle (picks up any custom currencies).
         renderCurrencyToggle();
 
-        // Hide nav items based on role
-        const staffOnly = SESSION.role === "staff";
-        const pages = [
-          "treasury",
-          "transfers",
-          "fx",
-          "students",
-          "programs",
-          "payments",
-          "salespeople",
-          "commission",
-          "expenses",
-          "payroll",
-          "reminders",
-          "reports",
-        ];
-        pages.forEach((p) => {
+        // Hide nav items based on role permissions
+        const canView    = perm("canView");
+        const ownPayroll = perm("ownPayrollOnly");
+        const financialPages = ["treasury","transfers","fx","students","programs","payments","salespeople","commission","expenses","reminders","reports","reconciliation","recon-history"];
+        financialPages.forEach(p => {
           const el = document.getElementById("nav-" + p);
-          if (el) el.classList.toggle("disabled", staffOnly && p !== "payroll");
+          if (el) el.classList.toggle("disabled", !canView || ownPayroll);
         });
-        // Users nav — admin only
+        // Payroll always visible if ownPayrollOnly
+        const pnav = document.getElementById("nav-payroll");
+        if (pnav) pnav.classList.remove("disabled");
+        // Users nav — canManageUsers only
         const unav = document.getElementById("nav-users");
         if (unav) unav.classList.toggle("disabled", !perm("canManageUsers"));
       }
@@ -2467,13 +2477,9 @@
         return `<span class="badge ${map[s] || "b-gray"}">${s}</span>`;
       }
       function roleBadge(r) {
-        const cls = {
-          admin: "role-admin",
-          accountant: "role-accountant",
-          manager: "role-manager",
-          staff: "role-staff",
-        };
-        return `<span class="role-badge ${cls[r] || ""}">${r}</span>`;
+        const cls = { admin:"role-admin", accountant:"role-accountant", manager:"role-manager", staff:"role-staff" };
+        const label = getRoleLabel(r);
+        return `<span class="role-badge ${cls[r] || "role-custom"}">${label}</span>`;
       }
       function initials(name) {
         return (name || "?")
@@ -4238,49 +4244,63 @@ ${spCards}`;
       }
 
       // ── PAGE: USERS ──────────────────────────────────────────────
+      const PERM_LABELS = {
+        canView:        'View financial data',
+        canCreate:      'Create records',
+        canEdit:        'Edit records',
+        canDelete:      'Delete records',
+        canManageUsers: 'Manage users & roles',
+        canApprove:     'Approve expenses',
+        ownPayrollOnly: 'Own payroll only (staff)',
+      };
       function usersPage() {
         if (!perm("canManageUsers"))
           return `<div class="empty"><div class="empty-icon">🔒</div><div class="empty-text">Admin access required</div></div>`;
-        const rolePermsMap = {
-          admin: [
-            "Full access",
-            "Create/edit/delete",
-            "Manage users",
-            "Approve expenses",
-            "All data visible",
-          ],
-          accountant: [
-            "View all data",
-            "Record payments",
-            "Add expenses",
-            "No delete",
-            "No user management",
-          ],
-          manager: [
-            "View all data",
-            "Approve expenses",
-            "No create/edit/delete",
-            "No user management",
-            "Read-only access",
-          ],
-          staff: [
-            "Own payroll only",
-            "No financial data",
-            "Limited dashboard",
-            "Cannot create/edit",
-            "No reports",
-          ],
-        };
-        return `<div class="grid2" style="margin-bottom:16px">
-    ${["admin", "accountant", "manager", "staff"]
-      .map(
-        (r) => `<div class="card" style="margin-bottom:0">
-      <div class="fl-sb" style="margin-bottom:10px"><div class="card-title">${r}</div>${roleBadge(r)}</div>
-      ${rolePermsMap[r].map((p) => `<div style="font-size:11px;color:var(--text3);padding:3px 0;border-bottom:1px solid var(--border)">${p}</div>`).join("")}
-      <div class="text3 mono" style="font-size:10px;margin-top:8px">${DB.users.filter((u) => u.role === r).length} user(s)</div>
-    </div>`,
-      )
-      .join("")}
+        if (!DB.roles) DB.roles = [];
+        // Built-in roles display
+        const builtInRoles = ['admin','accountant','manager','staff'];
+        const builtInCards = builtInRoles.map(r=>{
+          const p = ROLE_PERMS[r]||{};
+          return `<div class="card" style="margin-bottom:0">
+            <div class="fl-sb" style="margin-bottom:8px">
+              <div class="card-title" style="font-size:13px">${r}</div>
+              <div class="fl" style="gap:6px">${roleBadge(r)}<span class="badge b-gray" style="font-size:9px">built-in</span></div>
+            </div>
+            ${Object.entries(PERM_LABELS).map(([k,label])=>`
+              <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px">
+                <span style="color:${p[k]?'var(--green)':'var(--text3)'}">${p[k]?'✓':'✗'}</span>
+                <span style="color:${p[k]?'var(--text)':'var(--text3)'}">${label}</span>
+              </div>`).join('')}
+            <div class="text3 mono" style="font-size:10px;margin-top:8px">${DB.users.filter(u=>u.role===r).length} user(s)</div>
+          </div>`;
+        }).join('');
+        // Custom roles display
+        const customCards = DB.roles.map(cr=>{
+          const p = cr.permissions||{};
+          return `<div class="card" style="margin-bottom:0;border:1px solid var(--accent);border-opacity:.3">
+            <div class="fl-sb" style="margin-bottom:8px">
+              <div class="card-title" style="font-size:13px">${cr.name}</div>
+              <div class="fl" style="gap:6px">${roleBadge(cr.id)}<button class="btn btn-sm" onclick="openModal(modalEditRole('${cr.id}'))">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteCustomRole('${cr.id}')">Del</button></div>
+            </div>
+            ${Object.entries(PERM_LABELS).map(([k,label])=>`
+              <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px">
+                <span style="color:${p[k]?'var(--green)':'var(--text3)'}">${p[k]?'✓':'✗'}</span>
+                <span style="color:${p[k]?'var(--text)':'var(--text3)'}">${label}</span>
+              </div>`).join('')}
+            <div class="text3 mono" style="font-size:10px;margin-top:8px">${DB.users.filter(u=>u.role===cr.id).length} user(s)</div>
+          </div>`;
+        }).join('');
+        return `
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <div class="card-title">Role Management</div>
+      <button class="btn btn-accent btn-sm" onclick="openModal(modalEditRole(''))">+ New Role</button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Built-in roles cannot be modified. Create custom roles with specific permissions.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+      ${builtInCards}
+      ${customCards}
+    </div>
   </div>
   <div class="card">
     <div class="card-header"><div class="card-title">All users (${DB.users.length})</div></div>
@@ -4344,8 +4364,11 @@ ${spCards}`;
   </div>
   <div class="form-row2 form-row2-wrap">
     <div class="field"><label>Role</label><select id="f-role" onchange="toggleStaffLink()">
-      <option value="admin">Admin</option><option value="accountant">Accountant</option>
-      <option value="manager">Manager</option><option value="staff">Staff / Coach</option>
+      <optgroup label="Built-in">
+        <option value="admin">Admin</option><option value="accountant">Accountant</option>
+        <option value="manager">Manager</option><option value="staff">Staff / Coach</option>
+      </optgroup>
+      ${(DB.roles||[]).length?`<optgroup label="Custom">${(DB.roles||[]).map(r=>`<option value="${r.id}">${r.name}</option>`).join('')}</optgroup>`:''}
     </select></div>
     <div class="field" id="staff-link-field" style="display:none"><label>Link to staff member</label><select id="f-staffid">
       <option value="">— None —</option>
@@ -4369,7 +4392,10 @@ ${spCards}`;
     <input id="f-email" type="email" value="${u.email || ""}" placeholder="user@carltonedu.com"></div>
   <div class="form-row2 form-row2-wrap">
     <div class="field"><label>Role</label><select id="f-role" onchange="toggleStaffLink()">
-      ${["admin", "accountant", "manager", "staff"].map((r) => `<option value="${r}"${u.role === r ? " selected" : ""}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join("")}
+      <optgroup label="Built-in">
+        ${["admin","accountant","manager","staff"].map(r=>`<option value="${r}"${u.role===r?" selected":""}>${r.charAt(0).toUpperCase()+r.slice(1)}</option>`).join("")}
+      </optgroup>
+      ${(DB.roles||[]).length?`<optgroup label="Custom">${(DB.roles||[]).map(r=>`<option value="${r.id}"${u.role===r.id?" selected":""}>${r.name}</option>`).join('')}</optgroup>`:''}
     </select></div>
     <div class="field" id="staff-link-field"><label>Linked staff member</label><select id="f-staffid">
       <option value="">— None —</option>
@@ -4397,6 +4423,55 @@ ${spCards}`;
         const role = v("f-role");
         const el = document.getElementById("staff-link-field");
         if (el) el.style.display = role === "staff" ? "" : "none";
+      }
+      // ── ROLE MANAGEMENT ─────────────────────────────────────────
+      function modalEditRole(id) {
+        if (!DB.roles) DB.roles = [];
+        const cr = id ? DB.roles.find(r=>r.id===id) : null;
+        const p  = cr ? cr.permissions : {};
+        const permRows = Object.entries(PERM_LABELS).map(([k,label])=>`
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;background:var(--bg2);border:1px solid var(--border)">
+            <input type="checkbox" id="rp-${k}" ${p[k]?'checked':''} style="width:16px;height:16px;accent-color:var(--accent)">
+            <span style="font-size:13px">${label}</span>
+          </label>`).join('');
+        return `<div class="modal-title">${cr?'Edit role':'New role'}</div>
+<div class="field"><label>Role name</label><input id="cr-name" value="${cr?cr.name:''}" placeholder="e.g. Reception, Finance Officer..."></div>
+<div class="field"><label style="margin-bottom:8px">Permissions</label>
+  <div style="display:flex;flex-direction:column;gap:6px">${permRows}</div>
+</div>
+<div class="modal-actions">
+  <button class="btn" onclick="closeModal()">Cancel</button>
+  <button class="btn btn-accent" onclick="saveRole('${id||''}')">Save Role</button>
+</div>`;
+      }
+      function saveRole(id) {
+        if (!DB.roles) DB.roles = [];
+        const name = document.getElementById('cr-name')?.value?.trim();
+        if (!name) { toast('Role name required','amber'); return; }
+        const permissions = {};
+        Object.keys(PERM_LABELS).forEach(k=>{
+          permissions[k] = !!document.getElementById('rp-'+k)?.checked;
+        });
+        if (id) {
+          const cr = DB.roles.find(r=>r.id===id);
+          if (cr) Object.assign(cr, {name, permissions});
+        } else {
+          const newId = 'role-'+uid();
+          DB.roles.push({id:newId, name, permissions});
+        }
+        saveDB(); closeModal(); renderCurrentPage();
+        toast(id?'Role updated':'Role created');
+      }
+      function deleteCustomRole(id) {
+        if (!DB.roles) return;
+        const cr = DB.roles.find(r=>r.id===id);
+        if (!cr) return;
+        const inUse = (DB.users||[]).filter(u=>u.role===id);
+        if (inUse.length) { toast(`Cannot delete — ${inUse.length} user(s) have this role`,'amber'); return; }
+        if (!confirm(`Delete role "${cr.name}"?`)) return;
+        DB.roles = DB.roles.filter(r=>r.id!==id);
+        saveDB(); renderCurrentPage();
+        toast('Role deleted');
       }
       function saveUser(id) {
         const name = v("f-name").trim(),
