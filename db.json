@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "academyName": "Delta Academy",
+    "rates": { "usdAed": 3.67, "usdInr": 83.5 }
+  },
+  "users": [
+    {
+      "id": "u1",
+      "username": "admin",
+      "passwordHash": "185030e4",
+      "name": "Admin User",
+      "role": "admin",
+      "staffId": null,
+      "active": true,
+      "createdAt": "2026-01-01",
+      "email": "admin@carltonedu.com"
+    }
+  ],
+  "accounts": [],
+  "students": [],
+  "programs": [],
+  "quotations": [],
+  "payments": [],
+  "expenses": [],
+  "expenseCategories": [],
+  "transfers": [],
+  "staff": [],
+  "payroll": [],
+  "reconFiles": [],
+  "activityLog": [],
+  "salespeople": [],
+  "commissions": []
+}
