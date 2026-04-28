@@ -1690,6 +1690,11 @@
           if (res.ok) {
             const serverDB = await res.json();
             if (serverDB && serverDB.users && serverDB.users.length > 0) {
+              if (!serverDB.quotations)       serverDB.quotations = [];
+              if (!serverDB.roles)            serverDB.roles = [];
+              if (!serverDB.salespeople)      serverDB.salespeople = [];
+              if (!serverDB.commissions)      serverDB.commissions = [];
+              if (!serverDB.expenseCategories)serverDB.expenseCategories = [];
               DB = serverDB;
               try { localStorage.setItem(DB_KEY, JSON.stringify(DB)); } catch (e) {}
             }
@@ -4422,7 +4427,10 @@ ${spCards}`;
       function toggleStaffLink() {
         const role = v("f-role");
         const el = document.getElementById("staff-link-field");
-        if (el) el.style.display = role === "staff" ? "" : "none";
+        if (!el) return;
+        // Show staff-link for built-in "staff" role OR any custom role with ownPayrollOnly
+        const perms = getRolePerms(role);
+        el.style.display = (role === "staff" || perms.ownPayrollOnly) ? "" : "none";
       }
       // ── ROLE MANAGEMENT ─────────────────────────────────────────
       function modalEditRole(id) {
