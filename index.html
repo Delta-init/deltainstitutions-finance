@@ -3749,7 +3749,7 @@ ${spCards}`;
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-sm btn-accent" onclick="exportFilteredCSV()">↓ Export CSV</button>
-        <button class="btn btn-sm" onclick="openModal(modalEmailReport())">✉ Email report</button>
+        <button class="btn btn-sm" onclick="sendDailyReport(true)">✉ Email report</button>
       </div>
     </div>
   </div>
@@ -4247,7 +4247,10 @@ ${spCards}`;
           const hhmm = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
           if (hhmm !== s.time) return;
           if (s.lastSent === today()) return; // already sent today
-          sendDailyReport(); // sends HTML email to all directors
+          // Set flag immediately to prevent double-send within same minute
+          DB.reportSettings.lastSent = today();
+          saveDB();
+          sendDailyReport();
         }, 60000);
       }
 
