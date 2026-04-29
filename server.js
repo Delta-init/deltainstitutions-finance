@@ -31,9 +31,15 @@ const transporter = nodemailer.createTransport({
   tls: { rejectUnauthorized: false }
 });
 
+let _smtpOk = false;
 transporter.verify((error) => {
-  if (error) { console.error('⚠️  SMTP error:', error.message); }
-  else        { console.log('✅  SMTP connected'); }
+  if (error) { console.error('⚠️  SMTP error:', error.message); _smtpOk = false; }
+  else        { console.log('✅  SMTP connected'); _smtpOk = true; }
+});
+
+// ── SMTP STATUS ──────────────────────────────────────────────
+app.get('/smtp-status', (_req, res) => {
+  res.json({ connected: _smtpOk, host: 'mail.carltonedu.com', port: 465 });
 });
 
 // ── OTP STORE ────────────────────────────────────────────────

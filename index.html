@@ -1314,6 +1314,12 @@
             <path d="M14 13c0-2-1-3.5-3-3.5" /></svg
           >Users
         </div>
+        <div class="nav-item" id="nav-settings" onclick="nav('settings', this)">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="8" r="2.5"/>
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/>
+          </svg>Settings
+        </div>
         <div class="fx-mini">
           <div>1 USD = <span id="sx-usd-aed">3.67</span> AED</div>
           <div>1 USD = <span id="sx-usd-inr">83.5</span> INR</div>
@@ -2154,6 +2160,9 @@
         // Users nav — canManageUsers only
         const unav = document.getElementById("nav-users");
         if (unav) unav.classList.toggle("disabled", !perm("canManageUsers"));
+        // Settings — always visible
+        const snav = document.getElementById("nav-settings");
+        if (snav) snav.classList.remove("disabled");
       }
       function logActivity(type, msg) {
         if (!DB.activityLog) DB.activityLog = [];
@@ -2359,6 +2368,7 @@
           reconciliation: reconciliationPage,
           "recon-history": reconHistoryFullPage,
           users: usersPage,
+          settings: settingsPage,
         };
         if (fns[currentPage])
           document.getElementById("content").innerHTML = fns[currentPage]();
@@ -4230,22 +4240,257 @@ ${spCards}`;
         if (window._reportInterval) clearInterval(window._reportInterval);
         window._reportInterval = setInterval(() => {
           const s = DB.reportSettings;
-          if (!s || !s.enabled || !s.email) return;
+          if (!s || !s.enabled) return;
+          const recipients = Array.isArray(s.recipients)&&s.recipients.length ? s.recipients : (s.email?[s.email]:[]);
+          if (!recipients.length) return;
           const now = new Date();
-          const hhmm =
-            now.getHours().toString().padStart(2, "0") +
-            ":" +
-            now.getMinutes().toString().padStart(2, "0");
+          const hhmm = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
           if (hhmm !== s.time) return;
           if (s.lastSent === today()) return; // already sent today
+          sendDailyReport(); // sends HTML email to all directors
+        }, 60000);
+      }
+
+      // ── PAGE: SETTINGS ───────────────────────────────────────────
+      async function checkSmtpStatus() {
+        const el = document.getElementById('smtp-status-badge');
+        if (!el) return;
+        try {
+          const res = await fetch(`${EMAIL_SERVER}/smtp-status`);
+          const d = await res.json();
+          el.innerHTML = d.connected
+            ? `<span class="badge b-green">✓ SMTP Connected</span>`
+            : `<span class="badge b-red">✗ SMTP Error: ${d.error||'Unknown'}</span>`;
+        } catch(e) {
+          el.innerHTML = `<span class="badge b-amber">⚠ Server unreachable</span>`;
+        }
+      }
+      function settingsPage() {
+        if (!DB.reportSettings) DB.reportSettings = {};
+        const rs = DB.reportSettings;
+        const recipients = Array.isArray(rs.recipients) ? rs.recipients : (rs.email ? [rs.email] : []);
+        const sections = rs.sections || { payments:true, expenses:true, balances:true, quotations:true, commissions:true, transfers:false };
+        setTimeout(checkSmtpStatus, 100);
+        return `
+<div class="card" style="margin-bottom:14px">
+  <div class="card-header"><div class="card-title">General Settings</div></div>
+  <div class="form-row2 form-row2-wrap">
+    <div class="field"><label>Academy name</label>
+      <input id="gs-name" value="${(DB.settings||{}).academyName||'Delta Academy'}">
+    </div>
+    <div class="field"><label>USD → AED rate</label>
+      <input id="gs-aed" type="number" step="0.01" value="${(DB.settings||{}).rates?.usdAed||3.67}">
+    </div>
+  </div>
+  <div class="form-row2 form-row2-wrap">
+    <div class="field"><label>USD → INR rate</label>
+      <input id="gs-inr" type="number" step="0.01" value="${(DB.settings||{}).rates?.usdInr||83.5}">
+    </div>
+    <div class="field"></div>
+  </div>
+  <div class="modal-actions" style="justify-content:flex-start;margin-top:4px">
+    <button class="btn btn-accent" onclick="saveGeneralSettings()">Save General Settings</button>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-header">
+    <div class="card-title">📧 SMTP & Email Settings</div>
+    <div id="smtp-status-badge"><span class="badge b-gray">Checking…</span></div>
+  </div>
+  <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2)">
+    <div class="fl-sb"><span>SMTP Host</span><span class="mono">mail.carltonedu.com : 465 (SSL)</span></div>
+    <div class="fl-sb" style="margin-top:4px"><span>From address</span><span class="mono">no-replay@carltonedu.com</span></div>
+    <div class="fl-sb" style="margin-top:4px"><span>Server API</span><span class="mono">${EMAIL_SERVER}</span></div>
+  </div>
+
+  <div class="field"><label>Director / Report Recipients <span style="color:var(--text3);font-weight:400">(one per line)</span></label>
+    <textarea id="rs-recipients" rows="4" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:13px;resize:vertical">${recipients.join('\n')}</textarea>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">All addresses receive the daily report email.</div>
+  </div>
+
+  <div class="form-row2 form-row2-wrap">
+    <div class="field"><label>Send time (daily)</label>
+      <input id="rs-time" type="time" value="${rs.time||'08:00'}">
+    </div>
+    <div class="field"><label>Frequency</label>
+      <select id="rs-freq">
+        ${['daily','weekly','monthly'].map(f=>`<option value="${f}"${(rs.frequency||'daily')===f?' selected':''}>${f.charAt(0).toUpperCase()+f.slice(1)}</option>`).join('')}
+      </select>
+    </div>
+  </div>
+
+  <div class="field"><label style="margin-bottom:8px">Report sections to include</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${[['payments','💳 Payments & Collections'],['expenses','📤 Expenses'],['balances','🏦 Account Balances'],['quotations','📋 Pending Quotations'],['commissions','💰 Commissions Due'],['transfers','↔ Transfers']].map(([k,label])=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:13px">
+        <input type="checkbox" id="rs-sec-${k}" ${sections[k]!==false?'checked':''} style="accent-color:var(--accent)">
+        ${label}
+      </label>`).join('')}
+    </div>
+  </div>
+
+  <div class="field">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="rs-enabled" ${rs.enabled?'checked':''} style="accent-color:var(--accent)">
+      <span>Enable automatic send at scheduled time</span>
+    </label>
+    <div style="font-size:11px;color:var(--text3);margin-top:3px">Browser must be open at scheduled time for auto-send to trigger.</div>
+  </div>
+
+  ${rs.lastSent?`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Last sent: <span class="mono">${dateStr(rs.lastSent)}</span></div>`:''}
+
+  <div class="fl" style="gap:8px;flex-wrap:wrap;margin-top:4px">
+    <button class="btn btn-accent" onclick="saveEmailSettings()">Save Email Settings</button>
+    <button class="btn" onclick="sendDailyReport(true)">✉ Send Test Report Now</button>
+  </div>
+</div>`;
+      }
+
+      function saveGeneralSettings() {
+        if (!DB.settings) DB.settings = {};
+        DB.settings.academyName = document.getElementById('gs-name')?.value?.trim() || 'Delta Academy';
+        if (!DB.settings.rates) DB.settings.rates = {};
+        DB.settings.rates.usdAed = parseFloat(document.getElementById('gs-aed')?.value) || 3.67;
+        DB.settings.rates.usdInr = parseFloat(document.getElementById('gs-inr')?.value) || 83.5;
+        saveDB(); toast('General settings saved');
+      }
+
+      function saveEmailSettings() {
+        if (!DB.reportSettings) DB.reportSettings = {};
+        const rawRecipients = document.getElementById('rs-recipients')?.value || '';
+        const recipients = rawRecipients.split('\n').map(e=>e.trim()).filter(e=>e&&e.includes('@'));
+        const time    = document.getElementById('rs-time')?.value || '08:00';
+        const frequency = document.getElementById('rs-freq')?.value || 'daily';
+        const enabled = document.getElementById('rs-enabled')?.checked || false;
+        const sections = {};
+        ['payments','expenses','balances','quotations','commissions','transfers'].forEach(k=>{
+          sections[k] = !!document.getElementById('rs-sec-'+k)?.checked;
+        });
+        DB.reportSettings = { ...DB.reportSettings, recipients, time, frequency, enabled, sections, email: recipients[0]||'' };
+        saveDB();
+        if (enabled) scheduleReportReminder();
+        toast(`Email settings saved — ${recipients.length} recipient(s)`);
+        logActivity('settings','Email report settings updated');
+      }
+
+      function buildEmailReportHtml(from, to) {
+        const rs = DB.reportSettings || {};
+        const sections = rs.sections || { payments:true, expenses:true, balances:true, quotations:true, commissions:true };
+        const payments  = filterByDate(DB.payments,'date',from,to);
+        const expenses  = filterByDate(DB.expenses,'date',from,to);
+        const transfers = filterByDate(DB.transfers||[],'date',from,to);
+        const totalFees = payments.reduce((s,p)=>s+toUSD(p.amount,p.currency),0);
+        const totalExp  = expenses.reduce((s,e)=>s+toUSD(e.amount,e.currency),0);
+        const net = totalFees - totalExp;
+        const pendingQuots = (DB.quotations||[]).filter(q=>q.status==='sent'||q.status==='accepted');
+        const unpaidComms  = (DB.commissions||[]).filter(c=>!c.paid);
+        const unpaidCommAmt= unpaidComms.reduce((s,c)=>s+toUSD(c.commissionAmount,c.currency),0);
+        const acName = (DB.settings||{}).academyName || 'Delta Academy';
+        const dateLabel = from===to ? dateStr(from) : `${dateStr(from)} – ${dateStr(to)}`;
+
+        const row = (label,val,color='#333')=>`<tr><td style="padding:5px 0;color:#666;font-size:13px">${label}</td><td style="padding:5px 0;text-align:right;font-weight:600;color:${color};font-size:13px">${val}</td></tr>`;
+        const section = (title,icon,content)=>`
+          <div style="margin-bottom:20px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#999;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #eee">${icon} ${title}</div>
+            ${content}
+          </div>`;
+
+        let body = '';
+
+        if (sections.payments!==false) {
+          const rows = payments.length ? payments.map(p=>{
+            const st=getStudent(p.studentId); return `<tr><td style="padding:4px 0;font-size:12px;color:#555">${st.name||'?'}</td><td style="text-align:right;font-size:12px;color:#333;font-weight:600">${fmtOrig(p.amount,p.currency)}</td><td style="text-align:right;font-size:11px;color:#999;padding-left:10px">${p.method||''}</td></tr>`;
+          }).join('') : `<tr><td colspan="3" style="font-size:12px;color:#aaa;padding:6px 0">No payments today</td></tr>`;
+          body += section('Payments & Collections','💳',`<table style="width:100%;border-collapse:collapse">
+            ${rows}
+            <tr style="border-top:2px solid #eee"><td style="padding-top:8px;font-size:13px;font-weight:700">Total</td><td style="text-align:right;font-size:13px;font-weight:700;color:#1a7a5e;padding-top:8px">${fmt(totalFees)}</td><td></td></tr>
+          </table>`);
+        }
+
+        if (sections.expenses!==false) {
+          const rows = expenses.length ? expenses.map(e=>`<tr><td style="padding:4px 0;font-size:12px;color:#555">${e.description||'?'}</td><td style="font-size:11px;color:#888">${e.category||''}</td><td style="text-align:right;font-size:12px;color:#c0392b;font-weight:600">${fmtOrig(e.amount,e.currency)}</td></tr>`).join('') : `<tr><td colspan="3" style="font-size:12px;color:#aaa;padding:6px 0">No expenses today</td></tr>`;
+          body += section('Expenses','📤',`<table style="width:100%;border-collapse:collapse">
+            ${rows}
+            <tr style="border-top:2px solid #eee"><td style="padding-top:8px;font-size:13px;font-weight:700" colspan="2">Total</td><td style="text-align:right;font-size:13px;font-weight:700;color:#c0392b;padding-top:8px">${fmt(totalExp)}</td></tr>
+          </table>`);
+        }
+
+        if (sections.balances!==false) {
+          const rows = (DB.accounts||[]).map(a=>`<tr><td style="padding:4px 0;font-size:12px;color:#555">${a.name}</td><td style="font-size:11px;color:#888">${a.type}</td><td style="text-align:right;font-size:12px;font-weight:600;color:#333">${fmtOrig(a.balance,a.currency)}</td><td style="text-align:right;font-size:11px;color:#999;padding-left:10px">${fmt(toUSD(a.balance,a.currency))} USD</td></tr>`).join('');
+          body += section('Account Balances','🏦',`<table style="width:100%;border-collapse:collapse">
+            ${rows}
+            <tr style="border-top:2px solid #eee"><td style="padding-top:8px;font-size:13px;font-weight:700" colspan="3">Total (USD)</td><td style="text-align:right;font-size:13px;font-weight:700;color:#1a3a7a;padding-top:8px">${fmt(totalBalanceUSD())}</td></tr>
+          </table>`);
+        }
+
+        if (sections.quotations!==false && pendingQuots.length) {
+          const rows = pendingQuots.map(q=>`<tr><td style="padding:4px 0;font-size:12px;color:#555">${q.quotationNo}</td><td style="font-size:12px;color:#555">${q.studentName||'?'}</td><td style="text-align:right;font-size:12px;font-weight:600;color:#e67e22">${fmtOrig(q.amount,q.currency)}</td><td style="text-align:right;font-size:11px;color:#888;padding-left:10px">${q.status}</td></tr>`).join('');
+          body += section(`Pending Quotations (${pendingQuots.length})`,'📋',`<table style="width:100%;border-collapse:collapse">${rows}</table>`);
+        }
+
+        if (sections.commissions!==false && unpaidComms.length) {
+          const rows = unpaidComms.slice(0,10).map(c=>{const sp=getSalesperson(c.salespersonId);const q=(DB.quotations||[]).find(x=>x.id===c.quotationId);return `<tr><td style="padding:4px 0;font-size:12px;color:#555">${sp.name}</td><td style="font-size:11px;color:#888">${q?q.quotationNo:''}</td><td style="text-align:right;font-size:12px;font-weight:600;color:#8e44ad">${fmtOrig(c.commissionAmount,c.currency)}</td></tr>`;}).join('');
+          body += section(`Unpaid Commissions (${unpaidComms.length})`,'💰',`<table style="width:100%;border-collapse:collapse">${rows}${unpaidComms.length>10?`<tr><td colspan="3" style="font-size:11px;color:#aaa;padding-top:4px">…and ${unpaidComms.length-10} more</td></tr>`:''}</table><div style="font-size:12px;margin-top:8px;color:#8e44ad;font-weight:600">Total unpaid: ${fmt(unpaidCommAmt)}</div>`);
+        }
+
+        if (sections.transfers!==false && transfers.length) {
+          const rows = transfers.map(t=>`<tr><td style="padding:4px 0;font-size:12px;color:#555">${getAccount(t.fromAccountId)?.name||'?'} → ${getAccount(t.toAccountId)?.name||'?'}</td><td style="text-align:right;font-size:12px;font-weight:600;color:#333">${fmtOrig(t.amount,t.currency)}</td></tr>`).join('');
+          body += section(`Transfers (${transfers.length})`,'↔',`<table style="width:100%;border-collapse:collapse">${rows}</table>`);
+        }
+
+        // Net summary
+        const netColor = net>=0?'#1a7a5e':'#c0392b';
+        body += `<div style="background:#f8f9fa;border-radius:8px;padding:14px 16px;margin-top:4px">
+          <table style="width:100%;border-collapse:collapse">
+            ${row('Total Collections',fmt(totalFees),'#1a7a5e')}
+            ${row('Total Expenses',fmt(totalExp),'#c0392b')}
+            ${row('Net Position (Collections – Expenses)',`${net>=0?'+':''}${fmt(net)}`,netColor)}
+            ${row('Total Account Balance (USD)',fmt(totalBalanceUSD()),'#1a3a7a')}
+          </table>
+        </div>`;
+
+        return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif">
+<div style="max-width:620px;margin:24px auto">
+  <div style="background:#0f0f0f;padding:20px 28px;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:20px;font-weight:700;color:#fff"><span style="color:#1a9e9e">delta</span> <span style="font-size:13px;letter-spacing:2px">ACADEMY</span></span>
+    <span style="font-size:11px;color:#888;font-family:monospace">Daily Finance Report</span>
+  </div>
+  <div style="background:#fff;border:1px solid #eee;padding:24px 28px">
+    <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:4px">Finance Summary</div>
+    <div style="font-size:12px;color:#999;margin-bottom:20px">${dateLabel} · Generated ${new Date().toLocaleString()}</div>
+    ${body}
+  </div>
+  <div style="text-align:center;padding:14px;font-size:11px;color:#aaa">${acName} · Finance Manager · no-replay@carltonedu.com</div>
+</div></body></html>`;
+      }
+
+      async function sendDailyReport(test=false) {
+        if (!DB.reportSettings) DB.reportSettings = {};
+        const recipients = Array.isArray(DB.reportSettings.recipients)&&DB.reportSettings.recipients.length
+          ? DB.reportSettings.recipients
+          : DB.reportSettings.email ? [DB.reportSettings.email] : [];
+        if (!recipients.length) { toast('No recipient emails configured — go to Settings','amber'); return; }
+        const html = buildEmailReportHtml(today(), today());
+        const subject = `${test?'[TEST] ':''}${(DB.settings||{}).academyName||'Delta Academy'} — Daily Finance Report ${dateStr(today())}`;
+        let sent=0, failed=0;
+        for (const email of recipients) {
+          try {
+            const res = await fetch(`${EMAIL_SERVER}/send-email`, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({to:email, subject, html, text:`Daily Finance Report — ${dateStr(today())}\n\nPlease view this email in an HTML-capable client.`})
+            });
+            if (res.ok) sent++; else failed++;
+          } catch(e) { failed++; }
+        }
+        if (sent>0) {
           DB.reportSettings.lastSent = today();
           saveDB();
-          new Notification("Delta Academy — Daily Report Ready", {
-            body: `Your ${s.frequency} finance report is ready. Open the app to send it.`,
-            icon: "",
-          });
-          toast("Daily report reminder — check Reports page");
-        }, 60000);
+          toast(`✅ Report sent to ${sent} recipient(s)${failed?` (${failed} failed)`:''}`);
+          logActivity('report_send', `Daily report emailed to ${recipients.join(', ')}`);
+        } else {
+          toast('Failed to send — check email settings','red');
+        }
       }
 
       // ── PAGE: USERS ──────────────────────────────────────────────
