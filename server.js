@@ -21,12 +21,13 @@ const PORT = 3210;
 
 // ── SMTP ─────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
-  host: 'mail.carltonedu.com',
-  port: 465,
-  secure: true,
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
-    user: 'no-replay@carltonedu.com',
-    pass: '123#CarltonEdu_'
+    user: 'no-reply@deltaacademy.ae',
+    pass: 'ghcanbkkqvaiyfpz'
   },
   tls: { rejectUnauthorized: false }
 });
@@ -89,7 +90,7 @@ app.post('/send-otp', async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: '"Delta Academy" <no-replay@carltonedu.com>',
+      from: '"Delta Academy" <no-reply@deltaacademy.ae>',
       to: email,
       subject: `${otp} — Delta Academy Finance password reset`,
       html,
@@ -132,11 +133,11 @@ app.post('/send-email', async (req, res) => {
   <div style="background:#fff;border:1px solid #eee;padding:24px 28px;border-radius:0 0 10px 10px">
     <pre style="font-family:monospace;font-size:13px;color:#333;white-space:pre-wrap;line-height:1.7;margin:0">${text||''}</pre>
   </div>
-  <div style="text-align:center;padding:12px;font-size:11px;color:#aaa">Delta Academy · no-replay@carltonedu.com</div>
+  <div style="text-align:center;padding:12px;font-size:11px;color:#aaa">Delta Academy · no-reply@deltaacademy.ae</div>
 </div>`;
 
   try {
-    await transporter.sendMail({ from: '"Delta Academy" <no-replay@carltonedu.com>', to, subject, text: text||'', html: emailHtml });
+    await transporter.sendMail({ from: '"Delta Academy" <no-reply@deltaacademy.ae>', to, subject, text: text||'', html: emailHtml });
     console.log(`Report sent → ${to}`);
     res.json({ success: true });
   } catch (err) {
