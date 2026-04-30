@@ -3,6 +3,7 @@ node_modules
 package-lock.json
 nginx.conf
 db.json
+smtp.json
 index.html.bak
 .claude/
 screenshots/

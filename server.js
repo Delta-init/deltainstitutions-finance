@@ -20,27 +20,82 @@ const app = express();
 const PORT = 3210;
 
 // ── SMTP ─────────────────────────────────────────────────────
-const transporter = nodemailer.createTransport({
+const SMTP_FILE = path.join(__dirname, 'smtp.json');
+
+const DEFAULT_SMTP = {
   host: 'smtp.gmail.com',
   port: 587,
   secure: false,
-  requireTLS: true,
-  auth: {
-    user: 'no-reply@deltaacademy.ae',
-    pass: 'ghcanbkkqvaiyfpz'
-  },
-  tls: { rejectUnauthorized: false }
-});
+  user: 'no-reply@deltaacademy.ae',
+  pass: 'ghcanbkkqvaiyfpz'
+};
 
-let _smtpOk = false;
-transporter.verify((error) => {
-  if (error) { console.error('⚠️  SMTP error:', error.message); _smtpOk = false; }
-  else        { console.log('✅  SMTP connected'); _smtpOk = true; }
-});
+function loadSmtpConfig() {
+  try {
+    if (fs.existsSync(SMTP_FILE)) return { ...DEFAULT_SMTP, ...JSON.parse(fs.readFileSync(SMTP_FILE, 'utf8')) };
+  } catch(e) { console.error('SMTP config read error:', e.message); }
+  return { ...DEFAULT_SMTP };
+}
+
+function saveSmtpConfig(cfg) {
+  fs.writeFileSync(SMTP_FILE, JSON.stringify(cfg), 'utf8');
+}
+
+let _smtpCfg = loadSmtpConfig();
+let _smtpOk  = false;
+let transporter;
+
+function buildTransporter(cfg) {
+  transporter = nodemailer.createTransport({
+    host: cfg.host,
+    port: Number(cfg.port),
+    secure: !!cfg.secure,
+    requireTLS: !cfg.secure,
+    auth: { user: cfg.user, pass: cfg.pass },
+    tls: { rejectUnauthorized: false }
+  });
+  _smtpOk = false;
+  transporter.verify((error) => {
+    if (error) { console.error('⚠️  SMTP error:', error.message); _smtpOk = false; }
+    else        { console.log('✅  SMTP connected:', cfg.host); _smtpOk = true; }
+  });
+}
+
+buildTransporter(_smtpCfg);
 
 // ── SMTP STATUS ──────────────────────────────────────────────
 app.get('/smtp-status', (_req, res) => {
-  res.json({ connected: _smtpOk, host: 'mail.carltonedu.com', port: 465 });
+  res.json({ connected: _smtpOk, host: _smtpCfg.host, port: _smtpCfg.port, user: _smtpCfg.user });
+});
+
+// ── SMTP CONFIG (get + update) ────────────────────────────────
+app.get('/smtp-config', (_req, res) => {
+  res.json({ host: _smtpCfg.host, port: _smtpCfg.port, secure: _smtpCfg.secure, user: _smtpCfg.user });
+  // Note: password intentionally omitted from GET response
+});
+
+app.post('/smtp-config', async (req, res) => {
+  const { host, port, secure, user, pass } = req.body || {};
+  if (!host || !port || !user || !pass) return res.status(400).json({ error: 'host, port, user and pass are required' });
+  const newCfg = { host: host.trim(), port: Number(port), secure: !!secure, user: user.trim(), pass };
+  try {
+    // Test before saving
+    const testTransporter = nodemailer.createTransport({
+      host: newCfg.host, port: newCfg.port, secure: newCfg.secure,
+      requireTLS: !newCfg.secure,
+      auth: { user: newCfg.user, pass: newCfg.pass },
+      tls: { rejectUnauthorized: false }
+    });
+    await testTransporter.verify();
+    // Verified — save and rebuild
+    saveSmtpConfig(newCfg);
+    _smtpCfg = newCfg;
+    buildTransporter(_smtpCfg);
+    console.log('SMTP config updated:', newCfg.host);
+    res.json({ success: true, message: 'SMTP verified and updated' });
+  } catch(e) {
+    res.status(400).json({ error: `SMTP test failed: ${e.message}` });
+  }
 });
 
 // ── OTP STORE ────────────────────────────────────────────────
