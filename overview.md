@@ -1,4 +1,4 @@
-# Delta Academy Finance Manager — Full Project Overview
+# Delta Institutions Finance Manager — Full Project Overview
 
 ## Architecture Summary
 
@@ -343,7 +343,7 @@ Every `save*()` and `confirmDelete()` function needs to be updated — roughly 3
 | Issue | Fix |
 |-------|-----|
 | SMTP password hardcoded in server.js | Move to `.env` file using `dotenv` |
-| CORS allows all origins (`*`) | Restrict to `https://finance.carltonedu.com` |
+| CORS allows all origins (`*`) | Restrict to `https://finance.deltainstitutions.com` |
 | Simple password hash (`simpleHash`) in HTML | Use `bcrypt` on server, never client-side |
 | No rate limiting on `/send-otp` | Add `express-rate-limit` |
 | File proofs stored as base64 in LocalStorage | Store as actual files on server (`/uploads`) |

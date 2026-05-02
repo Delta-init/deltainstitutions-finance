@@ -1,5 +1,5 @@
 /**
- * Delta Academy Finance — Comprehensive Test Suite
+ * Delta Institutions Finance — Comprehensive Test Suite
  * 4 test cases per feature area
  */
 
@@ -29,7 +29,7 @@ async function testHealth() {
   console.log('\n📋 HEALTH CHECKS');
 
   let r = await req('GET', '/');
-  log('health', 'GET / returns service info', r.status === 200 && r.json?.service?.includes('Carlton'), `status=${r.status}`);
+  log('health', 'GET / returns service info', r.status === 200 && r.json?.service?.includes('DeltaInstitutions'), `status=${r.status}`);
 
   r = await req('GET', '/health');
   log('health', 'GET /health returns ok', r.status === 200 && r.json?.status === 'ok', `status=${r.status}`);
@@ -79,7 +79,7 @@ async function testDbPut() {
     expenses: [{ id: 'ex1', category_id: 'c1', amount: 200, currency: 'USD', status: 'pending' }],
     transfers: [],
     staff: [],
-    settings: { academyName: 'Delta Academy Finance', rates: { usdAed: 3.67, usdInr: 83.5 } }
+    settings: { academyName: 'Delta Institutions Finance', rates: { usdAed: 3.67, usdInr: 83.5 } }
   };
   let r = await req('PUT', '/db', payload);
   log('db-put', 'PUT /db valid payload returns success', r.status === 200 && r.json?.success === true, `status=${r.status}`);
@@ -103,7 +103,7 @@ function cleanDB() {
   return {
     users: [], accounts: [], students: [], payments: [],
     expenses: [], transfers: [], staff: [], programs: [],
-    payrollRuns: [], settings: { academyName: 'Delta Academy', rates: { usdAed: 3.67, usdInr: 83.5 } }
+    payrollRuns: [], settings: { academyName: 'Delta Institutions', rates: { usdAed: 3.67, usdInr: 83.5 } }
   };
 }
 
@@ -363,10 +363,10 @@ async function testSettings() {
   let db = (await req('GET', '/db')).json;
 
   // Case 1: update academy name
-  db.settings.academyName = 'Delta Academy';
+  db.settings.academyName = 'Delta Institutions';
   await req('PUT', '/db', db);
   let fresh = (await req('GET', '/db')).json;
-  log('settings', 'Academy name update persisted', fresh.settings.academyName === 'Delta Academy', `name=${fresh.settings.academyName}`);
+  log('settings', 'Academy name update persisted', fresh.settings.academyName === 'Delta Institutions', `name=${fresh.settings.academyName}`);
 
   // Case 2: update USD/AED rate
   fresh.settings.rates.usdAed = 3.72;
@@ -384,7 +384,7 @@ async function testSettings() {
   fresh.students = [];  // change something else
   await req('PUT', '/db', fresh);
   fresh = (await req('GET', '/db')).json;
-  log('settings', 'Settings survive alongside other DB writes', fresh.settings.rates.usdInr === 84.0 && fresh.settings.academyName === 'Delta Academy', `ok`);
+  log('settings', 'Settings survive alongside other DB writes', fresh.settings.rates.usdInr === 84.0 && fresh.settings.academyName === 'Delta Institutions', `ok`);
 }
 
 // ── 13. OTP — SEND ───────────────────────────────────────────
@@ -477,13 +477,13 @@ async function testLargePayload() {
   log('payload', 'Large DB read back correctly', fresh.students.length === 500 && fresh.payments.length === 500, `students=${fresh.students.length} payments=${fresh.payments.length}`);
 
   // Restore clean DB
-  await req('PUT', '/db', { users: [], accounts: [], students: [], payments: [], expenses: [], transfers: [], staff: [], programs: [], settings: { academyName: 'Delta Academy', rates: { usdAed: 3.67, usdInr: 83.5 } } });
+  await req('PUT', '/db', { users: [], accounts: [], students: [], payments: [], expenses: [], transfers: [], staff: [], programs: [], settings: { academyName: 'Delta Institutions', rates: { usdAed: 3.67, usdInr: 83.5 } } });
 }
 
 // ── RUN ALL ──────────────────────────────────────────────────
 async function run() {
   console.log('━'.repeat(52));
-  console.log('  Delta Academy Finance — Full Test Suite');
+  console.log('  Delta Institutions Finance — Full Test Suite');
   console.log(`  Target: ${BASE}`);
   console.log('━'.repeat(52));
 

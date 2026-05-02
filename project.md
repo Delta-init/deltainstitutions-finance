@@ -1,8 +1,8 @@
-# Delta Academy — Finance Manager
+# Delta Institutions — Finance Manager
 
 ## 1. Project Summary
 
-A single-tenant internal finance management dashboard for Delta Academy. It tracks students, programs, fees, treasury accounts (bank/PSP/cash/exchanger), expenses, payroll, inter-account transfers, and FX-converted totals across USD/AED/INR. All operational data lives in the browser's LocalStorage; a small Node.js email-server handles password-reset OTPs and ad-hoc report emails.
+A single-tenant internal finance management dashboard for Delta Institutions. It tracks students, programs, fees, treasury accounts (bank/PSP/cash/exchanger), expenses, payroll, inter-account transfers, and FX-converted totals across USD/AED/INR. All operational data lives in the browser's LocalStorage; a small Node.js email-server handles password-reset OTPs and ad-hoc report emails.
 
 ## 2. Architecture at a Glance
 
@@ -19,7 +19,7 @@ A single-tenant internal finance management dashboard for Delta Academy. It trac
 │  Node.js — server.js (Express 4) on :3210               │
 │  ├─ OTP store: in-memory Map (15-min GC)                │
 │  ├─ JSON DB:   db.json (read/write via /db)             │
-│  └─ SMTP:      nodemailer → mail.carltonedu.com:465     │
+│  └─ SMTP:      nodemailer → mail.deltainstitutions.com:465     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@ A single-tenant internal finance management dashboard for Delta Academy. It trac
 | App state   | `localStorage`                      | Per-browser, cleared on cache clear     |
 | Server API  | Node 18+/Express 4, ES modules      | —                                       |
 | Shared DB   | `db.json` (optional, via /db)       | Local file on the server machine        |
-| Email       | Nodemailer → SMTP 465/TLS           | External (carltonedu.com mail server)   |
+| Email       | Nodemailer → SMTP 465/TLS           | External (deltainstitutions.com mail server)   |
 
 ## 3. Tech Stack
 
@@ -43,7 +43,7 @@ A single-tenant internal finance management dashboard for Delta Academy. It trac
 ## 4. Source Tree
 
 ```
-carltonfinance/
+deltainstitutionsfinance/
 ├── index.html              # entire SPA (310 KB)
 ├── server.js               # Express email + JSON-DB server
 ├── package.json            # deps + "start" script
@@ -80,13 +80,13 @@ There is **no `.env` file**. All configuration lives inline in `server.js`:
 | Setting        | Value                          | Location            |
 |----------------|--------------------------------|---------------------|
 | Port           | `3210`                         | `server.js:20`      |
-| SMTP host      | `mail.carltonedu.com:465`      | `server.js:24–25`   |
-| SMTP user      | `no-replay@carltonedu.com`     | `server.js:28`      |
-| SMTP pass      | `123#CarltonEdu_` (hardcoded!) | `server.js:29`      |
+| SMTP host      | `mail.deltainstitutions.com:465`      | `server.js:24–25`   |
+| SMTP user      | `no-replay@deltainstitutions.com`     | `server.js:28`      |
+| SMTP pass      | `123#DeltaInstitutions_` (hardcoded!) | `server.js:29`      |
 | CORS origin    | `*`                            | `server.js:49`      |
 | OTP expiry     | 10 min                         | `server.js:64`      |
 | OTP GC period  | 15 min                         | `server.js:46`      |
-| Frontend target (prod) | `https://api-finance.carltonedu.com` | `index.html:3476` — auto-switches to `http://localhost:3210` on localhost |
+| Frontend target (prod) | `https://api-finance.deltainstitutions.com` | `index.html:3476` — auto-switches to `http://localhost:3210` on localhost |
 
 ## 7. Running Locally
 
@@ -103,11 +103,11 @@ npm start
 #    npx serve .       # then open http://localhost:3000/index.html
 ```
 
-`EMAIL_SERVER` now auto-switches — localhost → `http://localhost:3210`, anything else → `https://api-finance.carltonedu.com`. No manual edit needed.
+`EMAIL_SERVER` now auto-switches — localhost → `http://localhost:3210`, anything else → `https://api-finance.deltainstitutions.com`. No manual edit needed.
 
 ## 8. Deployment
 
-See `DEPLOYMENT_GUIDE.txt`. Target is cPanel Node.js apps; the HTML is served separately (statically) and the Node app lives at `https://api.carltonedu.com`.
+See `DEPLOYMENT_GUIDE.txt`. Target is cPanel Node.js apps; the HTML is served separately (statically) and the Node app lives at `https://api.deltainstitutions.com`.
 
 ## 9. Known Limitations
 

@@ -1,7 +1,7 @@
-# Delta Academy Finance — Server API
+# Delta Institutions Finance — Server API
 
 Base URL (local dev): `http://localhost:3210`
-Base URL (prod, per `server.js`): `https://api.carltonedu.com`
+Base URL (prod, per `server.js`): `https://api.deltainstitutions.com`
 
 All endpoints return JSON. CORS is `*`. No authentication.
 
@@ -14,7 +14,7 @@ Service banner / basic liveness.
 **Response 200**
 ```json
 {
-  "service": "Delta Academy Finance Server",
+  "service": "Delta Institutions Finance Server",
   "status": "running",
   "time": "2026-04-22T07:25:49.136Z"
 }
@@ -48,7 +48,7 @@ Generate a 6-digit OTP for a given username and email the code to that user. Sto
 
 Side effects:
 - `otpStore.set(username.toLowerCase(), { otp, email, expires: now+600_000 })`
-- Sends HTML email from `no-replay@carltonedu.com` with subject `<OTP> — Delta Academy Finance password reset`
+- Sends HTML email from `no-replay@deltainstitutions.com` with subject `<OTP> — Delta Institutions Finance password reset`
 
 ---
 

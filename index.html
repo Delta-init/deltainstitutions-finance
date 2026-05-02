@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Delta Academy — Finance</title>
+    <title>Delta Institutions — Finance</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap");
       :root {
@@ -945,11 +945,8 @@
         <!-- PANEL 1: Sign in -->
         <div class="login-panel active" id="panel-login">
           <div class="delta-logo" style="margin: 0 auto 12px; text-align:center">
-            <div class="delta-word" style="font-family:'DM Sans',sans-serif;font-size:52px;font-weight:800;letter-spacing:-3px;line-height:1">
-              <span style="color:var(--brand-red)">d</span><span style="color:var(--brand-purple)">e</span><span style="color:var(--brand-blue)">l</span><span style="color:var(--brand-green)">t</span><span style="color:var(--brand-orange)">a</span>
-            </div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:7px;color:var(--text);margin-top:2px">ACADEMY</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:10px;font-style:italic;color:var(--text3);margin-top:6px;letter-spacing:.3px">&ldquo;Learn Beyond Boundaries&rdquo;</div>
+            <img src="assets/logo.webp" alt="Delta Institutions" style="max-width:240px;height:auto;display:block;margin:0 auto"/>
+            <div style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:4px;color:var(--text);margin-top:8px">DELTA INSTITUTIONS</div>
           </div>
           <div class="login-sub">finance manager &mdash; sign in</div>
           <div class="field">
@@ -1113,10 +1110,8 @@
           "
         >
           <div class="delta-logo-sm" style="text-align:center">
-            <div style="font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1.5px;line-height:1">
-              <span style="color:var(--brand-red)">d</span><span style="color:var(--brand-purple)">e</span><span style="color:var(--brand-blue)">l</span><span style="color:var(--brand-green)">t</span><span style="color:var(--brand-orange)">a</span>
-            </div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;letter-spacing:4px;color:var(--text);margin-top:1px">ACADEMY</div>
+            <img src="assets/logo.webp" alt="Delta Institutions" style="max-width:140px;height:auto;display:block;margin:0 auto"/>
+            <div style="font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;letter-spacing:3px;color:var(--text);margin-top:4px">DELTA INSTITUTIONS</div>
           </div>
           <div class="logo-sub">finance manager</div>
         </div>
@@ -1711,7 +1706,7 @@
       function defaultDB() {
         return {
           settings: {
-            academyName: "Delta Academy",
+            academyName: "Delta Institutions",
             rates: { usdAed: 3.67, usdInr: 83.5 },
           },
           users: [
@@ -1724,7 +1719,7 @@
               staffId: null,
               active: true,
               createdAt: "2026-01-01",
-              email: "admin@carltonedu.com",
+              email: "admin@deltainstitutions.com",
             },
           ],
           roles: [],
@@ -4028,7 +4023,7 @@ ${spCards}`;
         const csv = rows.map((r) => r.join(",")).join("\n");
         const a = document.createElement("a");
         a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-        a.download = `carlton-report-${from || "all"}-to-${to}.csv`;
+        a.download = `deltainstitutions-report-${from || "all"}-to-${to}.csv`;
         a.click();
         toast("CSV exported");
       }
@@ -4049,7 +4044,7 @@ ${spCards}`;
   <div style="font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.6">Configure a daily summary email. The report opens in your email client pre-filled — click Send to dispatch it.</div>
 
   <div class="field"><label>Recipient email</label>
-    <input id="rpt-email" type="email" value="${s.email}" placeholder="e.g. admin@carltonacademy.com"></div>
+    <input id="rpt-email" type="email" value="${s.email}" placeholder="e.g. admin@deltainstitutions.com"></div>
 
   <div class="form-row2 form-row2-wrap">
     <div class="field"><label>Frequency</label>
@@ -4097,7 +4092,7 @@ ${spCards}`;
         const paid = new Set(payments.map((p) => p.studentId)).size;
         const total = DB.students.filter((s) => s.status === "active").length;
 
-        let txt = `Delta Academy — Daily Report\n`;
+        let txt = `Delta Institutions — Daily Report\n`;
         txt += `Date: ${dateStr(from)}${from !== to ? " to " + dateStr(to) : ""}\n`;
         txt += `Generated: ${new Date().toLocaleString()}\n`;
         txt += `${"─".repeat(44)}\n\n`;
@@ -4132,7 +4127,7 @@ ${spCards}`;
         txt += `  ${"─".repeat(44)}\n`;
         txt += `  TOTAL${" ".repeat(15)} ${fmt(totalBalanceUSD(), "USD")}\n\n`;
 
-        txt += `— Delta Academy Finance Manager`;
+        txt += `— Delta Institutions Finance Manager`;
         return txt;
       }
 
@@ -4172,7 +4167,7 @@ ${spCards}`;
           ? document.getElementById("rpt-to").value
           : today();
         const body = buildEmailReportText(from || today(), to || today());
-        const subject = `Delta Academy Finance Report — ${dateStr(today())}`;
+        const subject = `Delta Institutions Finance Report — ${dateStr(today())}`;
 
         const btn = document.querySelector('[onclick="sendEmailReport()"]');
         if (btn) {
@@ -4314,7 +4309,7 @@ ${spCards}`;
   <div class="card-header"><div class="card-title">General Settings</div></div>
   <div class="form-row2 form-row2-wrap">
     <div class="field"><label>Academy name</label>
-      <input id="gs-name" value="${(DB.settings||{}).academyName||'Delta Academy'}">
+      <input id="gs-name" value="${(DB.settings||{}).academyName||'Delta Institutions'}">
     </div>
     <div class="field"><label>USD → AED rate</label>
       <input id="gs-aed" type="number" step="0.01" value="${(DB.settings||{}).rates?.usdAed||3.67}">
@@ -4413,7 +4408,7 @@ ${spCards}`;
 
       function saveGeneralSettings() {
         if (!DB.settings) DB.settings = {};
-        DB.settings.academyName = document.getElementById('gs-name')?.value?.trim() || 'Delta Academy';
+        DB.settings.academyName = document.getElementById('gs-name')?.value?.trim() || 'Delta Institutions';
         if (!DB.settings.rates) DB.settings.rates = {};
         DB.settings.rates.usdAed = parseFloat(document.getElementById('gs-aed')?.value) || 3.67;
         DB.settings.rates.usdInr = parseFloat(document.getElementById('gs-inr')?.value) || 83.5;
@@ -4450,7 +4445,7 @@ ${spCards}`;
         const pendingQuots = (DB.quotations||[]).filter(q=>q.status==='sent'||q.status==='accepted');
         const unpaidComms  = (DB.commissions||[]).filter(c=>!c.paid);
         const unpaidCommAmt= unpaidComms.reduce((s,c)=>s+toUSD(c.commissionAmount,c.currency),0);
-        const acName = (DB.settings||{}).academyName || 'Delta Academy';
+        const acName = (DB.settings||{}).academyName || 'Delta Institutions';
         const dateLabel = from===to ? dateStr(from) : `${dateStr(from)} – ${dateStr(to)}`;
 
         const row = (label,val,color='#333')=>`<tr><td style="padding:5px 0;color:#666;font-size:13px">${label}</td><td style="padding:5px 0;text-align:right;font-weight:600;color:${color};font-size:13px">${val}</td></tr>`;
@@ -4536,7 +4531,7 @@ ${spCards}`;
           : DB.reportSettings.email ? [DB.reportSettings.email] : [];
         if (!recipients.length) { toast('No recipient emails configured — go to Settings','amber'); return; }
         const html = buildEmailReportHtml(today(), today());
-        const subject = `${test?'[TEST] ':''}${(DB.settings||{}).academyName||'Delta Academy'} — Daily Finance Report ${dateStr(today())}`;
+        const subject = `${test?'[TEST] ':''}${(DB.settings||{}).academyName||'Delta Institutions'} — Daily Finance Report ${dateStr(today())}`;
         let sent=0, failed=0;
         for (const email of recipients) {
           try {
@@ -4671,7 +4666,7 @@ ${spCards}`;
     <div class="field"><label>Username</label><input id="f-uname" placeholder="e.g. sara.ahmed"></div>
   </div>
   <div class="field"><label>Email <span style="color:var(--text3);font-weight:400">(used for password reset OTP)</span></label>
-    <input id="f-email" type="email" placeholder="e.g. sara@carltonedu.com"></div>
+    <input id="f-email" type="email" placeholder="e.g. sara@deltainstitutions.com"></div>
   <div class="form-row2 form-row2-wrap">
     <div class="field"><label>Password</label><input id="f-pass" type="password" placeholder="Min 6 characters"></div>
     <div class="field"><label>Confirm password</label><input id="f-pass2" type="password" placeholder="Repeat password"></div>
@@ -4703,7 +4698,7 @@ ${spCards}`;
     <div class="field"><label>Username</label><input id="f-uname" value="${u.username}"></div>
   </div>
   <div class="field"><label>Email <span style="color:var(--text3);font-weight:400">(for OTP password reset)</span></label>
-    <input id="f-email" type="email" value="${u.email || ""}" placeholder="user@carltonedu.com"></div>
+    <input id="f-email" type="email" value="${u.email || ""}" placeholder="user@deltainstitutions.com"></div>
   <div class="form-row2 form-row2-wrap">
     <div class="field"><label>Role</label><select id="f-role" onchange="toggleStaffLink()">
       <optgroup label="Built-in">
@@ -4849,7 +4844,7 @@ ${spCards}`;
         location.hostname === "127.0.0.1" ||
         location.protocol === "file:"
           ? "http://localhost:3210"
-          : "https://api-finance.carltonedu.com";
+          : "https://api-finance.deltainstitutions.com";
       let _fpUsername = ""; // track username across OTP steps
 
       async function doSendOtp() {
@@ -6085,10 +6080,10 @@ ${spCards}`;
         window.open(url, '_blank');
       }
       function waReminderMsg(name, quotNo, program, balance, currency, dueDate) {
-        return `Hi ${name},\n\nThis is a payment reminder from Delta Academy.\n\nQuotation: ${quotNo}${program ? '\nProgram: ' + program : ''}\nBalance due: ${fmtOrig(balance, currency)}\nDue date: ${dateStr(dueDate)}\n\nPlease arrange payment at your earliest convenience.\n\nThank you! 🙏`;
+        return `Hi ${name},\n\nThis is a payment reminder from Delta Institutions.\n\nQuotation: ${quotNo}${program ? '\nProgram: ' + program : ''}\nBalance due: ${fmtOrig(balance, currency)}\nDue date: ${dateStr(dueDate)}\n\nPlease arrange payment at your earliest convenience.\n\nThank you! 🙏`;
       }
       function waReceiptMsg(name, quotNo, amount, currency, date, ref) {
-        return `Hi ${name},\n\nThank you for your payment! Here is your receipt summary:\n\nQuotation: ${quotNo}\nAmount paid: ${fmtOrig(amount, currency)}\nDate: ${dateStr(date)}${ref ? '\nReference: ' + ref : ''}\n\nThank you for choosing Delta Academy! 🎓`;
+        return `Hi ${name},\n\nThank you for your payment! Here is your receipt summary:\n\nQuotation: ${quotNo}\nAmount paid: ${fmtOrig(amount, currency)}\nDate: ${dateStr(date)}${ref ? '\nReference: ' + ref : ''}\n\nThank you for choosing Delta Institutions! 🎓`;
       }
       function copyReminder(studentId) {
         const s = getStudent(studentId);

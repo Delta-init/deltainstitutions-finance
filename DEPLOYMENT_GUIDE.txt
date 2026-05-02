@@ -1,8 +1,8 @@
-# Delta Academy Finance Server — cPanel Deployment Guide
-# Host: carltonedu.com
+# Delta Institutions Finance Server — cPanel Deployment Guide
+# Host: deltainstitutions.com
 
 ## STEP 1 — Check Node.js is available in cPanel
-1. Log into cPanel (https://carltonedu.com/cpanel)
+1. Log into cPanel (https://deltainstitutions.com/cpanel)
 2. Look for "Setup Node.js App" in the Software section
 3. If you don't see it, contact your host and ask them to enable Node.js
 
@@ -15,17 +15,17 @@
 3. Fill in:
    - Node.js version: 18 or 20 (latest LTS)
    - Application mode: Production
-   - Application root: carlton-finance    ← folder name on server
-   - Application URL: carlton-finance     ← or leave blank for subdomain
+   - Application root: deltainstitutions-finance    ← folder name on server
+   - Application URL: deltainstitutions-finance     ← or leave blank for subdomain
    - Application startup file: server.js
 4. Click CREATE
-5. cPanel will show you the app path, e.g: /home/yourusername/carlton-finance
+5. cPanel will show you the app path, e.g: /home/yourusername/deltainstitutions-finance
 
 ---
 
 ## STEP 3 — Upload your files via File Manager
 
-Upload these 3 files to /home/yourusername/carlton-finance/
+Upload these 3 files to /home/yourusername/deltainstitutions-finance/
   - server.js
   - package.json
 
@@ -42,7 +42,7 @@ In cPanel Node.js App panel:
    (this installs express, nodemailer, cors)
 
 OR via SSH if you have it:
-  cd ~/carlton-finance
+  cd ~/deltainstitutions-finance
   npm install
 
 ---
@@ -65,8 +65,8 @@ In cPanel Node.js App panel:
 ## STEP 7 — Find your server URL
 
 Your server will run at one of these:
-  https://carltonedu.com:3210         ← if port 3210 is open
-  https://carlton-finance.carltonedu.com   ← if set up as subdomain
+  https://deltainstitutions.com:3210         ← if port 3210 is open
+  https://deltainstitutions-finance.deltainstitutions.com   ← if set up as subdomain
 
 IMPORTANT: cPanel shared hosting usually BLOCKS custom ports like 3210.
 You need to either:
@@ -78,9 +78,9 @@ You need to either:
 ## STEP 8 — Set up a subdomain (RECOMMENDED)
 
 1. In cPanel → Subdomains
-2. Create: api.carltonedu.com → Document root: carlton-finance
-3. In cPanel Node.js App → set Application URL to: api.carltonedu.com
-4. Your server is now at: https://api.carltonedu.com
+2. Create: api.deltainstitutions.com → Document root: deltainstitutions-finance
+3. In cPanel Node.js App → set Application URL to: api.deltainstitutions.com
+4. Your server is now at: https://api.deltainstitutions.com
 
 ---
 
@@ -93,7 +93,7 @@ Find this line (near the top of the <script> section):
 
 Change it to your server URL:
 
-  const EMAIL_SERVER = 'https://api.carltonedu.com';
+  const EMAIL_SERVER = 'https://api.deltainstitutions.com';
 
 Save the file. That's it.
 
@@ -134,12 +134,12 @@ Save this as test-email.js and run: node test-email.js
   import nodemailer from 'nodemailer';
 
   const transporter = nodemailer.createTransport({
-    host: 'mail.carltonedu.com',
+    host: 'mail.deltainstitutions.com',
     port: 465,
     secure: true,
     auth: {
-      user: 'no-replay@carltonedu.com',
-      pass: '123#CarltonEdu_'
+      user: 'no-replay@deltainstitutions.com',
+      pass: '123#DeltaInstitutions_'
     }
   });
 
@@ -156,10 +156,10 @@ Save this as test-email.js and run: node test-email.js
 ## SUMMARY
 
 Local (development):     node server.js  →  http://localhost:3210
-Hosted on cPanel:        https://api.carltonedu.com
-HTML setting to update:  const EMAIL_SERVER = 'https://api.carltonedu.com';
+Hosted on cPanel:        https://api.deltainstitutions.com
+HTML setting to update:  const EMAIL_SERVER = 'https://api.deltainstitutions.com';
 
 Files on server:
-  ~/carlton-finance/server.js
-  ~/carlton-finance/package.json
-  ~/carlton-finance/node_modules/  (created by npm install)
+  ~/deltainstitutions-finance/server.js
+  ~/deltainstitutions-finance/package.json
+  ~/deltainstitutions-finance/node_modules/  (created by npm install)

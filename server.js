@@ -1,8 +1,8 @@
 /**
- * Delta Academy — Finance Manager
+ * Delta Institutions — Finance Manager
  * Email server — cPanel / Production build
  *
- * HOSTED AT: https://api.carltonedu.com
+ * HOSTED AT: https://api.deltainstitutions.com
  */
 
 import express from 'express';
@@ -114,7 +114,7 @@ app.set('trust proxy', 1);
 app.use((req, _res, next) => { console.log(`${req.method} ${req.path}`); next(); });
 
 // ── HEALTH ───────────────────────────────────────────────────
-app.get('/', (req, res) => res.json({ service: 'Delta Academy Finance Server', status: 'running', time: new Date().toISOString() }));
+app.get('/', (req, res) => res.json({ service: 'Delta Institutions Finance Server', status: 'running', time: new Date().toISOString() }));
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 // ── SEND OTP ─────────────────────────────────────────────────
@@ -145,9 +145,9 @@ app.post('/send-otp', async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: '"Delta Academy" <no-reply@deltaacademy.ae>',
+      from: '"Delta Institutions" <no-reply@deltaacademy.ae>',
       to: email,
-      subject: `${otp} — Delta Academy Finance password reset`,
+      subject: `${otp} — Delta Institutions Finance password reset`,
       html,
       text: `Your OTP is: ${otp}\nExpires in 10 minutes.`
     });
@@ -188,11 +188,11 @@ app.post('/send-email', async (req, res) => {
   <div style="background:#fff;border:1px solid #eee;padding:24px 28px;border-radius:0 0 10px 10px">
     <pre style="font-family:monospace;font-size:13px;color:#333;white-space:pre-wrap;line-height:1.7;margin:0">${text||''}</pre>
   </div>
-  <div style="text-align:center;padding:12px;font-size:11px;color:#aaa">Delta Academy · no-reply@deltaacademy.ae</div>
+  <div style="text-align:center;padding:12px;font-size:11px;color:#aaa">Delta Institutions · no-reply@deltaacademy.ae</div>
 </div>`;
 
   try {
-    await transporter.sendMail({ from: '"Delta Academy" <no-reply@deltaacademy.ae>', to, subject, text: text||'', html: emailHtml });
+    await transporter.sendMail({ from: '"Delta Institutions" <no-reply@deltaacademy.ae>', to, subject, text: text||'', html: emailHtml });
     console.log(`Report sent → ${to}`);
     res.json({ success: true });
   } catch (err) {
@@ -237,10 +237,10 @@ app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 // ── START ─────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n${'━'.repeat(44)}`);
-  console.log(`  Delta Academy Finance Email Server`);
+  console.log(`  Delta Institutions Finance Email Server`);
   console.log(`  Port   : ${PORT}`);
   console.log(`  Local  : http://localhost:${PORT}`);
-  console.log(`  Live   : https://api.carltonedu.com`);
-  console.log(`  SMTP   : mail.carltonedu.com:465`);
+  console.log(`  Live   : https://api.deltainstitutions.com`);
+  console.log(`  SMTP   : mail.deltainstitutions.com:465`);
   console.log(`${'━'.repeat(44)}\n`);
 });

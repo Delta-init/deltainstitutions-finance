@@ -1,4 +1,4 @@
-# Delta Academy Finance — Testing Report
+# Delta Institutions Finance — Testing Report
 
 **Date:** 2026-04-22
 **Environment:** Local (Node v24.14.1, macOS Darwin 24.6.0)
@@ -17,7 +17,7 @@
 | Browser          | Puppeteer-headless Chrome, 1440×900  |
 
 Pre-test code changes (all user-approved):
-- **A.** `index.html:3476` — `EMAIL_SERVER` auto-switches: localhost → `http://localhost:3210`, prod → `https://api-finance.carltonedu.com`.
+- **A.** `index.html:3476` — `EMAIL_SERVER` auto-switches: localhost → `http://localhost:3210`, prod → `https://api-finance.deltainstitutions.com`.
 - **B.** `package.json` — added `"test": "node test.mjs"`.
 - **C.** Static HTTP server launched at `:4173` to serve `index.html`.
 - **D/E/F.** Merged user's new feature set: added **Reconciliation** page (nav + router wiring + full JS + hidden statement upload input) on top of existing Scheduled-Email-Report, Account Statement, Payment/Expense Proof, Programs revamp, and Expense Category manager (those already shipped with the repo).
@@ -64,7 +64,7 @@ OTP sent → invalid@fakeDomain12345.xyz (user: testuser)
 Report sent → invalid@fakeDomain12345.xyz
 ```
 
-i.e. the SMTP connection to `mail.carltonedu.com:465` **does succeed** with the credentials in `server.js`, and the server accepts a recipient at a nonexistent domain. Two things to note:
+i.e. the SMTP connection to `mail.deltainstitutions.com:465` **does succeed** with the credentials in `server.js`, and the server accepts a recipient at a nonexistent domain. Two things to note:
 
 1. The `/send-otp` and `/send-email` endpoints do no recipient-domain validation — any attacker-controlled `to` gets relayed. See `mistakes.md` M4.
 2. `transporter.verify()` result is not logged at startup despite the `console.log` in `server.js:35–37`. The callback does fire (SMTP worked), but log output was suppressed — likely because the verify call resolved *after* the banner print flushed. Not a functional bug.
@@ -77,7 +77,7 @@ Driven by Puppeteer via `tools/capture.mjs`. For each nav page: open → wait �
 
 | # | Page               | File                              | Render OK | Seed content verified |
 |---|--------------------|-----------------------------------|-----------|-----------------------|
-| 1 | Login              | `screenshots/01-login.png`        | ✅ | Delta Academy wordmark, username/password fields, Sign-in button, Forgot-password link |
+| 1 | Login              | `screenshots/01-login.png`        | ✅ | Delta Institutions wordmark, username/password fields, Sign-in button, Forgot-password link |
 | 2 | Dashboard          | `screenshots/02-dashboard.png`    | ✅ | 4 KPI tiles ($31.2k balance, $814.82 fees, $3.6k expenses, $-2833.99 net), 4 treasury accounts, 4 recent payments |
 | 3 | Treasury Accounts  | `screenshots/03-accounts.png`     | ✅ | 4 accounts listed (Emirates NBD, PayTabs, Cash on hand, HDFC Bank) |
 | 4 | Transfers          | `screenshots/04-transfers.png`    | ✅ | Transfer list table / empty-state rendered |
@@ -161,7 +161,7 @@ npm install
 
 # Terminal 1 — API
 npm start
-# → Delta Academy Finance Email Server on :3210
+# → Delta Institutions Finance Email Server on :3210
 
 # Terminal 2 — Static UI
 npx --yes serve -l 4173 -s .
@@ -186,4 +186,4 @@ node tools/capture-forgot.mjs  # + forgot-password screen
 1. **Security** (in order): rotate SMTP password → move to `.env` (M2), add bearer token on `/db` and `/send-email` (M4), scope CORS (M3), rate-limit OTP (M5).
 2. **Persistence**: replace the LocalStorage-is-truth model with a SQLite backend and proper REST routes (full list in `overview.md`).
 3. **DX**: add the `db.seed.json` fallback (M12), write a real README (M13), start carving the 310 KB HTML into modules behind a small bundler (M14).
-4. **Deploy hygiene**: decide between `api.carltonedu.com` and `finance.carltonedu.com`, then align server banner, deployment guide, and frontend constant (M10).
+4. **Deploy hygiene**: decide between `api.deltainstitutions.com` and `finance.deltainstitutions.com`, then align server banner, deployment guide, and frontend constant (M10).

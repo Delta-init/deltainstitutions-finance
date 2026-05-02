@@ -1,34 +1,34 @@
 # Mistakes, Bugs, and Lessons Learned
 
-A living log of issues discovered while setting up, analyzing, and running Delta Academy Finance. Each entry: **what**, **where**, **why it matters**, **proposed fix**. Items marked ⏳ are pending approval; ✅ are fixed; 🚫 are known-but-not-fixing.
+A living log of issues discovered while setting up, analyzing, and running Delta Institutions Finance. Each entry: **what**, **where**, **why it matters**, **proposed fix**. Items marked ⏳ are pending approval; ✅ are fixed; 🚫 are known-but-not-fixing.
 
 ---
 
 ## M1 — Frontend hardcoded to production email server ✅
 
-- **Was:** `index.html:3476` hardcoded `const EMAIL_SERVER = "https://finance.carltonedu.com";` — localhost previews couldn't reach `http://localhost:3210`.
-- **Fixed this session:** replaced with a `location.hostname`-aware auto-switch. Production URL is now `https://api-finance.carltonedu.com` per user direction.
+- **Was:** `index.html:3476` hardcoded `const EMAIL_SERVER = "https://finance.deltainstitutions.com";` — localhost previews couldn't reach `http://localhost:3210`.
+- **Fixed this session:** replaced with a `location.hostname`-aware auto-switch. Production URL is now `https://api-finance.deltainstitutions.com` per user direction.
 - **Status:** ✅ shipped.
 
 ## M2 — SMTP credentials hardcoded in source
 
 - **Where:** `server.js:27–30`
   ```js
-  auth: { user: 'no-replay@carltonedu.com', pass: '123#CarltonEdu_' }
+  auth: { user: 'no-replay@deltainstitutions.com', pass: '123#DeltaInstitutions_' }
   ```
-- **Why it matters:** Password is in the git repo — anyone with clone access can send email as `no-replay@carltonedu.com`. Rotation requires a code change.
+- **Why it matters:** Password is in the git repo — anyone with clone access can send email as `no-replay@deltainstitutions.com`. Rotation requires a code change.
 - **Proposed fix:** Move to `.env` with `dotenv`; read `process.env.SMTP_USER` / `SMTP_PASS`. Rotate the password after migration.
 
 ## M3 — CORS is wildcard (`*`)
 
 - **Where:** `server.js:49`
 - **Why it matters:** Any website can call the API from a user's browser session. Combined with unauthenticated `/db` and `/send-email`, this is a significant abuse vector (spam, data tampering).
-- **Proposed fix:** Whitelist only `https://finance.carltonedu.com` (prod) and `http://localhost:3000` / `file://` for dev.
+- **Proposed fix:** Whitelist only `https://finance.deltainstitutions.com` (prod) and `http://localhost:3000` / `file://` for dev.
 
 ## M4 — `/db` and `/send-email` have no authentication
 
 - **Where:** `server.js:154`, `server.js:116`, `server.js:160`
-- **Why it matters:** `PUT /db` with any JSON object overwrites all academy data. `POST /send-email` allows anyone to send arbitrary email from `no-replay@carltonedu.com` (subject/body attacker-controlled) — classic open relay.
+- **Why it matters:** `PUT /db` with any JSON object overwrites all academy data. `POST /send-email` allows anyone to send arbitrary email from `no-replay@deltainstitutions.com` (subject/body attacker-controlled) — classic open relay.
 - **Proposed fix:** Require a bearer token (env var `API_TOKEN`) on mutating endpoints; limit `/send-email` `to:` to an allow-list or require auth.
 
 ## M5 — No rate limiting on `/send-otp`
@@ -63,11 +63,11 @@ A living log of issues discovered while setting up, analyzing, and running Delta
 ## M10 — Inconsistent production URLs ⏳
 
 - **Where:**
-  - `server.js:181` — banner prints `Live: https://api.carltonedu.com`
-  - `DEPLOYMENT_GUIDE.txt` — same (`api.carltonedu.com`)
-  - `index.html:3476` — now points to `https://api-finance.carltonedu.com` (user's chosen prod URL)
-- **Why it matters:** The frontend now targets `api-finance.carltonedu.com`, but the server banner and deployment guide still say `api.carltonedu.com`. Only one subdomain can be the real API host.
-- **Proposed fix:** Update `server.js:181` banner + `DEPLOYMENT_GUIDE.txt` to `api-finance.carltonedu.com` (or change the frontend if the canonical host is `api.carltonedu.com`). Not fixed this session — needs user decision on the canonical subdomain.
+  - `server.js:181` — banner prints `Live: https://api.deltainstitutions.com`
+  - `DEPLOYMENT_GUIDE.txt` — same (`api.deltainstitutions.com`)
+  - `index.html:3476` — now points to `https://api-finance.deltainstitutions.com` (user's chosen prod URL)
+- **Why it matters:** The frontend now targets `api-finance.deltainstitutions.com`, but the server banner and deployment guide still say `api.deltainstitutions.com`. Only one subdomain can be the real API host.
+- **Proposed fix:** Update `server.js:181` banner + `DEPLOYMENT_GUIDE.txt` to `api-finance.deltainstitutions.com` (or change the frontend if the canonical host is `api.deltainstitutions.com`). Not fixed this session — needs user decision on the canonical subdomain.
 
 ## M11 — `PUT /db` only validates "is a non-empty plain object"
 
@@ -129,5 +129,5 @@ A living log of issues discovered while setting up, analyzing, and running Delta
 | # | What happened | Recovery |
 |---|---------------|----------|
 | S1 | The Claude share link the user provided (`2d8e6af7-…`) returned 403 — private share, not readable. | Proceeded without it; confirmed with user. |
-| S2 | Initial working directory was empty; had to clone into `.` rather than default `Carlton_finance/` subfolder. | Used `git clone <url> .` — fine. |
+| S2 | Initial working directory was empty; had to clone into `.` rather than default `DeltaInstitutions_finance/` subfolder. | Used `git clone <url> .` — fine. |
 | S3 | Tried to preview the HTML from `file://` — fetches to `http://localhost:3210` will be blocked by browser CORS (mixed origin). | To be addressed by serving `index.html` over an HTTP static server *and* changing `EMAIL_SERVER` (see M1). |
