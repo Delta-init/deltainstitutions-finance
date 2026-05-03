@@ -1,7 +1,7 @@
 {
   "name": "delta-finance-server",
   "version": "1.0.0",
-  "description": "Delta Academy — Finance Manager email server",
+  "description": "Delta Institutions — Finance Manager email + data server",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
+    "mongoose": "^9.6.1",
     "nodemailer": "^6.9.7"
   }
 }
