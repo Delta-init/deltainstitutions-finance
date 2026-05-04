@@ -59,6 +59,10 @@
       body.light .cur-btn.active { color: #fff; }
       body.light .nav-item.active { background: rgba(30,63,207,.08); }
       body.light .nav-item:hover:not(.active) { background: #ebecef; }
+      .logo-light { display: none; }
+      .logo-dark { display: block; }
+      body.light .logo-light { display: block; }
+      body.light .logo-dark { display: none; }
       * {
         box-sizing: border-box;
         margin: 0;
@@ -945,7 +949,8 @@
         <!-- PANEL 1: Sign in -->
         <div class="login-panel active" id="panel-login">
           <div class="delta-logo" style="margin: 0 auto 12px; text-align:center">
-            <img src="assets/logo.webp" alt="Delta Institutions" style="max-width:240px;height:auto;display:block;margin:0 auto"/>
+            <img class="logo-dark" src="assets/logo-dark-theme.png" alt="Delta Institutions" style="max-width:240px;height:auto;margin:0 auto"/>
+            <img class="logo-light" src="assets/logo-light-theme.png" alt="Delta Institutions" style="max-width:240px;height:auto;margin:0 auto"/>
             <div style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:4px;color:var(--text);margin-top:8px">DELTA INSTITUTIONS</div>
           </div>
           <div class="login-sub">finance manager &mdash; sign in</div>
@@ -1110,7 +1115,8 @@
           "
         >
           <div class="delta-logo-sm" style="text-align:center">
-            <img src="assets/logo.webp" alt="Delta Institutions" style="max-width:140px;height:auto;display:block;margin:0 auto"/>
+            <img class="logo-dark" src="assets/logo-dark-theme.png" alt="Delta Institutions" style="max-width:140px;height:auto;margin:0 auto"/>
+            <img class="logo-light" src="assets/logo-light-theme.png" alt="Delta Institutions" style="max-width:140px;height:auto;margin:0 auto"/>
             <div style="font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;letter-spacing:3px;color:var(--text);margin-top:4px">DELTA INSTITUTIONS</div>
           </div>
           <div class="logo-sub">finance manager</div>
